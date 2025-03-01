@@ -1,12 +1,13 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 
-st.title("📊 Dashboard Interativo com CSV")
+st.title("📊 Auditoria dos Níveis de Escavação")
 
-# URL do CSV no GitHub (substitua com o caminho correto do seu repositório)
+# URL do CSV no GitHub (substitua pelo caminho correto do seu repositório)
 csv_url = "https://raw.githubusercontent.com/intangivelsuportedigital/intpgpa/main/edr9_salvamentos.csv"
 
-# Opção de upload manual
+# Upload do arquivo CSV
 uploaded_file = st.file_uploader("📂 Faça upload do arquivo CSV", type=["csv"])
 
 # Verifica se o usuário fez upload do arquivo ou deseja usar o CSV padrão
@@ -31,33 +32,91 @@ else:
 # Exibe a fonte dos dados
 st.write(source)
 
-# Exibir uma prévia dos dados
-st.write("📋 **Visualização dos Dados:**")
-st.dataframe(df)
+# ✅ **Filtrar os registros de "controle de escavação"**
+if "branchTipoAtividade" not in df.columns:
+    st.error("❌ A coluna 'branchTipoAtividade' não foi encontrada no CSV. Verifique o nome correto.")
+    st.stop()
 
-# Informações do dataset
-st.write("📊 **Informações do Dataset:**")
-st.write(f"📌 **Total de Linhas:** {df.shape[0]}")
-st.write(f"📌 **Total de Colunas:** {df.shape[1]}")
-st.write("📌 **Tipos de Dados:**")
-st.write(df.dtypes)
+df_controle = df[df["branchTipoAtividade"] == "controle de escavação"]
 
-# Estatísticas básicas
-st.write("📈 **Resumo Estatístico:**")
-st.write(df.describe())
+# ✅ **Criar tabela de auditoria dos níveis**
+colunas_necessarias = {"sitio", "locus", "UE", "nivel", "branchAtividadeControleEscavacao"}
+colunas_existentes = set(df_controle.columns)
 
-# Gráfico de barras interativo (se houver colunas numéricas)
-colunas_numericas = df.select_dtypes(include=['number']).columns
-if len(colunas_numericas) > 0:
-    st.write("📊 **Gráfico de Barras**")
-    opcao = st.selectbox("Escolha uma coluna para visualizar:", colunas_numericas)
-    st.bar_chart(df[opcao])
+if not colunas_necessarias.issubset(colunas_existentes):
+    st.error(f"❌ O CSV não contém todas as colunas necessárias! Encontradas: {colunas_existentes}")
+    st.stop()
 
-# Gráfico de dispersão opcional
-if len(colunas_numericas) > 1:
-    st.write("📈 **Gráfico de Dispersão**")
-    x_col = st.selectbox("Escolha a variável do eixo X:", colunas_numericas)
-    y_col = st.selectbox("Escolha a variável do eixo Y:", colunas_numericas)
-    st.scatter_chart(df[[x_col, y_col]])
+df_niveis = df_controle.pivot_table(
+    index=["sitio", "locus", "UE", "nivel"],
+    columns="branchAtividadeControleEscavacao",
+    aggfunc="size",
+    fill_value=0
+).reset_index()
 
-st.success("🚀 Dashboard atualizado com sucesso!")
+# Criar a coluna de status
+df_niveis["status"] = "Aberto e Não Fechado"  # Default
+
+# ✅ **Definir status baseado nos registros**
+df_niveis.loc[
+    (df_niveis.get("abrir Nível", 0) > 0) & (df_niveis.get("fechar Nível", 0) > 0),
+    "status"
+] = "Aberto e Fechado"
+
+df_niveis.loc[
+    (df_niveis.get("abrir Nível", 0) == 0) & (df_niveis.get("fechar Nível", 0) > 0),
+    "status"
+] = "Fechado Sem Registro de Abertura"
+
+# ✅ **Função para aplicar estilos na tabela**
+def highlight_status(val):
+    color = "white"
+    background = "white"
+    
+    if val == "Aberto e Não Fechado":
+        background = "yellow"
+        color = "black"
+    elif val == "Fechado Sem Registro de Abertura":
+        background = "red"
+        color = "black"
+
+    return f"background-color: {background}; color: {color};"
+
+# Aplicar estilo na tabela
+styled_df = df_niveis.style.applymap(highlight_status, subset=["status"])
+
+# ✅ **Interface do Dashboard**
+st.write("📋 **Tabela de Auditoria dos Níveis Escavados**")
+st.dataframe(styled_df)
+
+# ✅ **Filtros Interativos**
+sitios = df_niveis["sitio"].unique()
+locus = df_niveis["locus"].unique()
+ues = df_niveis["UE"].unique()  # Alterado "ue" para "UE"
+
+filtro_sitio = st.selectbox("Filtrar por Sítio:", ["Todos"] + list(sitios))
+filtro_locus = st.selectbox("Filtrar por Locus:", ["Todos"] + list(locus))
+filtro_ue = st.selectbox("Filtrar por UE:", ["Todos"] + list(ues))
+
+df_filtrado = df_niveis.copy()
+
+if filtro_sitio != "Todos":
+    df_filtrado = df_filtrado[df_filtrado["sitio"] == filtro_sitio]
+if filtro_locus != "Todos":
+    df_filtrado = df_filtrado[df_filtrado["locus"] == filtro_locus]
+if filtro_ue != "Todos":
+    df_filtrado = df_filtrado[df_filtrado["UE"] == filtro_ue]  # Alterado "ue" para "UE"
+
+st.write("📋 **Níveis Filtrados**")
+st.dataframe(df_filtrado.style.applymap(highlight_status, subset=["status"]))
+
+# ✅ **Gráfico de Auditoria**
+st.write("📊 **Gráfico de Status dos Níveis**")
+fig, ax = plt.subplots()
+df_niveis["status"].value_counts().plot(kind="bar", ax=ax)
+ax.set_xlabel("Status")
+ax.set_ylabel("Quantidade")
+ax.set_title("Distribuição dos Níveis de Escavação")
+st.pyplot(fig)
+
+st.success("🚀 Auditoria concluída com sucesso!")
