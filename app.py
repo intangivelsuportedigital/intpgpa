@@ -35,8 +35,15 @@ st.write(source)
 df_controle = df[df["branchTipoAtividade"] == "controle de escavação"]
 
 # ✅ **Criar tabela de auditoria dos níveis**
+colunas_necessarias = {"sitio", "locus", "UE", "nivel", "branchAtividadeControleEscavacao"}
+colunas_existentes = set(df_controle.columns)
+
+if not colunas_necessarias.issubset(colunas_existentes):
+    st.error(f"❌ O CSV não contém todas as colunas necessárias! Encontradas: {colunas_existentes}")
+    st.stop()
+
 df_niveis = df_controle.pivot_table(
-    index=["sitio", "locus", "ue", "nivel"],
+    index=["sitio", "locus", "UE", "nivel"],  # Alterado de "ue" para "UE"
     columns="branchAtividadeControleEscavacao",
     aggfunc="size",
     fill_value=0
@@ -63,7 +70,7 @@ st.dataframe(df_niveis)
 # ✅ **Filtros Interativos**
 sitios = df_niveis["sitio"].unique()
 locus = df_niveis["locus"].unique()
-ues = df_niveis["ue"].unique()
+ues = df_niveis["UE"].unique()  # Alterado "ue" para "UE"
 
 filtro_sitio = st.selectbox("Filtrar por Sítio:", ["Todos"] + list(sitios))
 filtro_locus = st.selectbox("Filtrar por Locus:", ["Todos"] + list(locus))
@@ -76,7 +83,7 @@ if filtro_sitio != "Todos":
 if filtro_locus != "Todos":
     df_filtrado = df_filtrado[df_filtrado["locus"] == filtro_locus]
 if filtro_ue != "Todos":
-    df_filtrado = df_filtrado[df_filtrado["ue"] == filtro_ue]
+    df_filtrado = df_filtrado[df_filtrado["UE"] == filtro_ue]  # Alterado "ue" para "UE"
 
 st.write("📋 **Níveis Filtrados**")
 st.dataframe(df_filtrado)
