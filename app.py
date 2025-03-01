@@ -2,15 +2,14 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# ✅ Criando abas no topo
-abas = ["📊 Auditoria dos Níveis", "📂 Carregar Dados"]
-aba_selecionada = st.tabs(abas)
+# ✅ Criando menu de navegação fixo no topo
+aba_selecionada = st.radio("🔹 Selecione uma seção:", ["📂 Carregar Dados", "📊 Auditoria"], horizontal=True)
 
 # URL do CSV no GitHub (substitua pelo caminho correto do seu repositório)
 csv_url = "https://raw.githubusercontent.com/intangivelsuportedigital/intpgpa/main/edr9_salvamentos.csv"
 
-# ✅ 🟢 ABA 1: Carregar Dados
-with aba_selecionada[1]:  
+# ✅ 🟢 Seção: Carregar Dados
+if aba_selecionada == "📂 Carregar Dados":
     st.title("📂 Carregar e Visualizar Dados")
 
     # Upload do arquivo CSV
@@ -42,8 +41,8 @@ with aba_selecionada[1]:
     st.write("📋 **Visualização dos Dados**")
     st.dataframe(df)
 
-# ✅ 🟢 ABA 2: Auditoria dos Níveis
-with aba_selecionada[0]:  
+# ✅ 🟢 Seção: Auditoria
+elif aba_selecionada == "📊 Auditoria":
     st.title("📊 Auditoria dos Níveis de Escavação")
 
     # ✅ **Filtrar os registros de "controle de escavação"**
