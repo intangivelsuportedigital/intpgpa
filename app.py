@@ -60,4 +60,7 @@ if len(colunas_numericas) > 1:
     y_col = st.selectbox("Escolha a variável do eixo Y:", colunas_numericas)
     st.scatter_chart(df[[x_col, y_col]])
 
+git add app.py
+
+
 st.success("🚀 Dashboard atualizado com sucesso!")
