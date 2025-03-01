@@ -9,13 +9,21 @@ csv_url = "https://raw.githubusercontent.com/SEU-USUARIO/SEU-REPOSITORIO/main/ed
 # Opção de upload manual
 uploaded_file = st.file_uploader("📂 Faça upload do arquivo CSV", type=["csv"])
 
-# Verifica se o usuário fez upload do arquivo
+# Verifica se o usuário fez upload do arquivo ou deseja usar o CSV padrão
 if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-    source = "📤 **Dados carregados via upload**"
+    try:
+        df = pd.read_csv(uploaded_file, encoding="ISO-8859-1", on_bad_lines="skip")
+        source = "📤 **Dados carregados via upload**"
+    except Exception as e:
+        st.error(f"❌ Erro ao carregar o arquivo: {e}")
+        st.stop()
 elif st.button("Usar CSV Padrão"):
-    df = pd.read_csv(csv_url)
-    source = "🌍 **Dados carregados do repositório GitHub**"
+    try:
+        df = pd.read_csv(csv_url, encoding="ISO-8859-1", on_bad_lines="skip")
+        source = "🌍 **Dados carregados do repositório GitHub**"
+    except Exception as e:
+        st.error(f"❌ Erro ao carregar o arquivo do GitHub: {e}")
+        st.stop()
 else:
     st.warning("📌 Por favor, faça upload de um CSV ou clique em 'Usar CSV Padrão'.")
     st.stop()
