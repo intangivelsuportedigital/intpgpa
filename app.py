@@ -8,6 +8,9 @@ aba_selecionada = st.radio("🔹 Selecione uma seção:", ["📂 Carregar Dados"
 # URL do CSV no GitHub (substitua pelo caminho correto do seu repositório)
 csv_url = "https://raw.githubusercontent.com/intangivelsuportedigital/intpgpa/main/edr9_salvamentos.csv"
 
+# ✅ Criar uma variável vazia para o DataFrame
+df = None
+
 # ✅ 🟢 Seção: Carregar Dados
 if aba_selecionada == "📂 Carregar Dados":
     st.title("📂 Carregar e Visualizar Dados")
@@ -44,6 +47,11 @@ if aba_selecionada == "📂 Carregar Dados":
 # ✅ 🟢 Seção: Auditoria
 elif aba_selecionada == "📊 Auditoria":
     st.title("📊 Auditoria dos Níveis de Escavação")
+
+    # ✅ 🚨 Garantir que o CSV foi carregado antes de usar o df
+    if df is None:
+        st.error("❌ Nenhum arquivo CSV carregado! Vá para '📂 Carregar Dados' e faça o upload.")
+        st.stop()
 
     # ✅ **Filtrar os registros de "controle de escavação"**
     if "branchTipoAtividade" not in df.columns:
