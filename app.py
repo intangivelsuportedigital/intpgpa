@@ -56,8 +56,10 @@ elif aba_principal == "🌎 Selecionar Sítio":
         st.error("❌ Nenhum arquivo CSV carregado! Vá para '📂 Carregar Dados' e faça o upload.")
         st.stop()
 
+    # 🔹 Remover valores nulos (nan) da lista de sítios
+    lista_sitios = st.session_state.df["sitio"].dropna().unique().tolist()
+
     # Criar dropdown para selecionar o sítio
-    lista_sitios = st.session_state.df["sitio"].unique().tolist()
     st.session_state.sitio_selecionado = st.selectbox("🔍 Escolha um sítio:", ["Todos"] + lista_sitios)
 
     # Filtrar o DataFrame pelo sítio selecionado
