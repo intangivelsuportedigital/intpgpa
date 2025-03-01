@@ -1,12 +1,12 @@
 import streamlit as st
 import pandas as pd
 
-st.title("📊 Dashboard Interativo com CSV")
+st.title("📊 Auditoria dos Níveis de Escavação")
 
-# URL do CSV no GitHub (substitua com o caminho correto do seu repositório)
+# URL do CSV no GitHub (substitua pelo caminho correto do seu repositório)
 csv_url = "https://raw.githubusercontent.com/intangivelsuportedigital/intpgpa/main/edr9_salvamentos.csv"
 
-# Opção de upload manual
+# Upload do arquivo CSV
 uploaded_file = st.file_uploader("📂 Faça upload do arquivo CSV", type=["csv"])
 
 # Verifica se o usuário fez upload do arquivo ou deseja usar o CSV padrão
@@ -31,33 +31,65 @@ else:
 # Exibe a fonte dos dados
 st.write(source)
 
-# Exibir uma prévia dos dados
-st.write("📋 **Visualização dos Dados:**")
-st.dataframe(df)
+# ✅ **Filtrar os registros de "controle de escavação"**
+df_controle = df[df["branchTipoAtividade"] == "controle de escavação"]
 
-# Informações do dataset
-st.write("📊 **Informações do Dataset:**")
-st.write(f"📌 **Total de Linhas:** {df.shape[0]}")
-st.write(f"📌 **Total de Colunas:** {df.shape[1]}")
-st.write("📌 **Tipos de Dados:**")
-st.write(df.dtypes)
+# ✅ **Criar tabela de auditoria dos níveis**
+df_niveis = df_controle.pivot_table(
+    index=["sitio", "locus", "ue", "nivel"],
+    columns="branchAtividadeControleEscavacao",
+    aggfunc="size",
+    fill_value=0
+).reset_index()
 
-# Estatísticas básicas
-st.write("📈 **Resumo Estatístico:**")
-st.write(df.describe())
+# Criar a coluna de status
+df_niveis["status"] = "Aberto e Não Fechado"  # Default
 
-# Gráfico de barras interativo (se houver colunas numéricas)
-colunas_numericas = df.select_dtypes(include=['number']).columns
-if len(colunas_numericas) > 0:
-    st.write("📊 **Gráfico de Barras**")
-    opcao = st.selectbox("Escolha uma coluna para visualizar:", colunas_numericas)
-    st.bar_chart(df[opcao])
+# ✅ **Definir status baseado nos registros**
+df_niveis.loc[
+    (df_niveis.get("abrir Nível", 0) > 0) & (df_niveis.get("fechar Nível", 0) > 0),
+    "status"
+] = "Aberto e Fechado"
 
-# Gráfico de dispersão opcional
-if len(colunas_numericas) > 1:
-    st.write("📈 **Gráfico de Dispersão**")
-    x_col = st.selectbox("Escolha a variável do eixo X:", colunas_numericas)
-    y_col = st.selectbox("Escolha a variável do eixo Y:", colunas_numericas)
-    st.scatter_chart(df[[x_col, y_col]])
+df_niveis.loc[
+    (df_niveis.get("abrir Nível", 0) == 0) & (df_niveis.get("fechar Nível", 0) > 0),
+    "status"
+] = "Fechado Sem Registro de Abertura"
 
-st.success("🚀 Dashboard atualizado com sucesso!")
+# ✅ **Interface do Dashboard**
+st.write("📋 **Tabela de Auditoria dos Níveis Escavados**")
+st.dataframe(df_niveis)
+
+# ✅ **Filtros Interativos**
+sitios = df_niveis["sitio"].unique()
+locus = df_niveis["locus"].unique()
+ues = df_niveis["ue"].unique()
+
+filtro_sitio = st.selectbox("Filtrar por Sítio:", ["Todos"] + list(sitios))
+filtro_locus = st.selectbox("Filtrar por Locus:", ["Todos"] + list(locus))
+filtro_ue = st.selectbox("Filtrar por UE:", ["Todos"] + list(ues))
+
+df_filtrado = df_niveis.copy()
+
+if filtro_sitio != "Todos":
+    df_filtrado = df_filtrado[df_filtrado["sitio"] == filtro_sitio]
+if filtro_locus != "Todos":
+    df_filtrado = df_filtrado[df_filtrado["locus"] == filtro_locus]
+if filtro_ue != "Todos":
+    df_filtrado = df_filtrado[df_filtrado["ue"] == filtro_ue]
+
+st.write("📋 **Níveis Filtrados**")
+st.dataframe(df_filtrado)
+
+# ✅ **Gráfico de Auditoria**
+import matplotlib.pyplot as plt
+
+st.write("📊 **Gráfico de Status dos Níveis**")
+fig, ax = plt.subplots()
+df_niveis["status"].value_counts().plot(kind="bar", ax=ax)
+ax.set_xlabel("Status")
+ax.set_ylabel("Quantidade")
+ax.set_title("Distribuição dos Níveis de Escavação")
+st.pyplot(fig)
+
+st.success("🚀 Auditoria concluída com sucesso!")
