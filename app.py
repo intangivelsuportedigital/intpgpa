@@ -39,6 +39,10 @@ if "branchTipoAtividade" not in df.columns:
 
 df_controle = df[df["branchTipoAtividade"] == "controle de escavação"]
 
+# ✅ **Corrigir a exibição da coluna locus (remover .0000)**
+if "locus" in df_controle.columns:
+    df_controle["locus"] = df_controle["locus"].apply(lambda x: int(x) if isinstance(x, (int, float)) else x)
+
 # ✅ **Criar tabela de auditoria dos níveis**
 colunas_necessarias = {"sitio", "locus", "UE", "nivel", "branchAtividadeControleEscavacao"}
 colunas_existentes = set(df_controle.columns)
@@ -70,15 +74,15 @@ df_niveis.loc[
 
 # ✅ **Função para aplicar estilos na tabela**
 def highlight_status(val):
-    color = "white"
+    color = "black"
     background = "white"
     
     if val == "Aberto e Não Fechado":
         background = "yellow"
-        color = "black"
     elif val == "Fechado Sem Registro de Abertura":
         background = "red"
-        color = "black"
+    elif val == "Aberto e Fechado":
+        background = "lightgray"
 
     return f"background-color: {background}; color: {color};"
 
