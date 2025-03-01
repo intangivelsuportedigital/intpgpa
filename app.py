@@ -8,8 +8,9 @@ aba_selecionada = st.radio("🔹 Selecione uma seção:", ["📂 Carregar Dados"
 # URL do CSV no GitHub (substitua pelo caminho correto do seu repositório)
 csv_url = "https://raw.githubusercontent.com/intangivelsuportedigital/intpgpa/main/edr9_salvamentos.csv"
 
-# ✅ Criar uma variável vazia para o DataFrame
-df = None
+# ✅ Usar sessão do Streamlit para armazenar o DataFrame entre abas
+if "df" not in st.session_state:
+    st.session_state.df = None  # Inicializar df na sessão
 
 # ✅ 🟢 Seção: Carregar Dados
 if aba_selecionada == "📂 Carregar Dados":
@@ -21,14 +22,14 @@ if aba_selecionada == "📂 Carregar Dados":
     # Verifica se o usuário fez upload do arquivo ou deseja usar o CSV padrão
     if uploaded_file is not None:
         try:
-            df = pd.read_csv(uploaded_file, encoding="ISO-8859-1", sep=";", on_bad_lines="skip")
+            st.session_state.df = pd.read_csv(uploaded_file, encoding="ISO-8859-1", sep=";", on_bad_lines="skip")
             source = "📤 **Dados carregados via upload**"
         except Exception as e:
             st.error(f"❌ Erro ao carregar o arquivo: {e}")
             st.stop()
     elif st.button("Usar CSV Padrão"):
         try:
-            df = pd.read_csv(csv_url, encoding="ISO-8859-1", sep=";", on_bad_lines="skip")
+            st.session_state.df = pd.read_csv(csv_url, encoding="ISO-8859-1", sep=";", on_bad_lines="skip")
             source = "🌍 **Dados carregados do repositório GitHub**"
         except Exception as e:
             st.error(f"❌ Erro ao carregar o arquivo do GitHub: {e}")
@@ -41,17 +42,20 @@ if aba_selecionada == "📂 Carregar Dados":
     st.write(source)
 
     # Exibe os dados carregados
-    st.write("📋 **Visualização dos Dados**")
-    st.dataframe(df)
+    if st.session_state.df is not None:
+        st.write("📋 **Visualização dos Dados**")
+        st.dataframe(st.session_state.df)
 
 # ✅ 🟢 Seção: Auditoria
 elif aba_selecionada == "📊 Auditoria":
     st.title("📊 Auditoria dos Níveis de Escavação")
 
     # ✅ 🚨 Garantir que o CSV foi carregado antes de usar o df
-    if df is None:
+    if st.session_state.df is None:
         st.error("❌ Nenhum arquivo CSV carregado! Vá para '📂 Carregar Dados' e faça o upload.")
         st.stop()
+
+    df = st.session_state.df  # Usar o df carregado na sessão
 
     # ✅ **Filtrar os registros de "controle de escavação"**
     if "branchTipoAtividade" not in df.columns:
