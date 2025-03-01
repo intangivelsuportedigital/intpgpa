@@ -4,7 +4,7 @@ import pandas as pd
 st.title("📊 Dashboard Interativo com CSV")
 
 # URL do CSV no GitHub (substitua com o caminho correto do seu repositório)
-csv_url = "https://raw.githubusercontent.com/SEU-USUARIO/SEU-REPOSITORIO/main/edr9_salvamentos.csv"
+csv_url = "https://raw.githubusercontent.com/intangivelsuportedigital/intpgpa/main/edr9_salvamentos.csv"
 
 # Opção de upload manual
 uploaded_file = st.file_uploader("📂 Faça upload do arquivo CSV", type=["csv"])
@@ -12,14 +12,14 @@ uploaded_file = st.file_uploader("📂 Faça upload do arquivo CSV", type=["csv"
 # Verifica se o usuário fez upload do arquivo ou deseja usar o CSV padrão
 if uploaded_file is not None:
     try:
-        df = pd.read_csv(uploaded_file, encoding="ISO-8859-1", on_bad_lines="skip")
+        df = pd.read_csv(uploaded_file, encoding="ISO-8859-1", sep=";", on_bad_lines="skip")
         source = "📤 **Dados carregados via upload**"
     except Exception as e:
         st.error(f"❌ Erro ao carregar o arquivo: {e}")
         st.stop()
 elif st.button("Usar CSV Padrão"):
     try:
-        df = pd.read_csv(csv_url, encoding="ISO-8859-1", on_bad_lines="skip")
+        df = pd.read_csv(csv_url, encoding="ISO-8859-1", sep=";", on_bad_lines="skip")
         source = "🌍 **Dados carregados do repositório GitHub**"
     except Exception as e:
         st.error(f"❌ Erro ao carregar o arquivo do GitHub: {e}")
@@ -59,11 +59,5 @@ if len(colunas_numericas) > 1:
     x_col = st.selectbox("Escolha a variável do eixo X:", colunas_numericas)
     y_col = st.selectbox("Escolha a variável do eixo Y:", colunas_numericas)
     st.scatter_chart(df[[x_col, y_col]])
-
-git add app.py
-
-
-git remote add origin https://github.com/intangivelsuportedigital/intpgpa.git
-
 
 st.success("🚀 Dashboard atualizado com sucesso!")
