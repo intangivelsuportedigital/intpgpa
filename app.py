@@ -63,4 +63,11 @@ if len(colunas_numericas) > 1:
 git add app.py
 
 
+git remote add origin https://github.com/SEU_USUARIO/SEU_REPOSITORIO.git
+
+
+
+git remote add origin https://github.com/intangivelsuportedigital/intpgpa.git
+
+
 st.success("🚀 Dashboard atualizado com sucesso!")
